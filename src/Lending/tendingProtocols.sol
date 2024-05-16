@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20; 
-
-contract LendingProtocol is ERC20{
+import "@hack/Lending/mathematics.sol";
+import "@openzeppelin/ERC20/ERC20.sol";
+contract LendingProtocol is ERC20 ,mathematics {
 
      address owner;
-     mapping (address -> uint) public lenders;
+     mapping (address => uint) public lenders;
      ERC20 DAI;
      ERC20 bond;
      uint maxLTV = 80;
@@ -33,12 +34,16 @@ contract LendingProtocol is ERC20{
        require(bond.balanceOf(msg.sender) >= amount, "you do not have enough bond tokens");
        _burn(msg.sender, amount);
        DAI.transfer(msg.sender, amount);
-       leders[msg.sender] -= amount;
+       lenders[msg.sender] -= amount;
     
     }
-    function borrow(uint borrowedValue) public payable validAmount(borrowedValue) {
-        uint borrowLimit = percentage((collateralValue - borrowedValue), maxLTV);
+    function borrow(uint borrowedValue) external validAmount(borrowedValue) payable{
+        
+        require(msg.sender.balance >= msg.value, "you do not have enugh ETH for the colletral");
 
+        uint borrowLimit = percentage((collateralValue - borrowedValue), maxLTV);
+        require(borrowedValue<= borrowLimit, "you have a limited borrow ");
+        
     }
 
      
